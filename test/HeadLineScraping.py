@@ -1,13 +1,14 @@
 import requests
 import pandas as pd
 import os
+import datetime
 from konlpy.tag import Okt
 from collections import Counter
 from time import strftime, localtime, time
 from wordcloud import WordCloud
 from bs4 import BeautifulSoup
 
-starting_time = strftime('%Y%m%d%I%M%S%p',localtime(time()))
+starting_time = str((datetime.datetime.now()).strftime('%Y%m%d%H%M'))
 
 print("===============string_time")
 print(starting_time)
@@ -47,7 +48,7 @@ for main_index in range(len(rankingnews_box)):
 # 워드 카운트
 nouns = okt.nouns(contents_text)
 words = [n for n in nouns if len(n) > 1]
-# del words[30:]
+# del words[2:]
 word_counter = Counter(words)
 
 print("헤드라인 추출 :")
@@ -57,19 +58,23 @@ print(word_counter)
 detail_searching = ""
 
 
-processing_start_time = strftime('%Y%m%d%I%M%S%p',localtime(time()))
+processing_start_time = str((datetime.datetime.now()).strftime('%Y%m%d%H%M'))
 print("===============processing_start_time")
 print(processing_start_time)
 
+
+to_DateTime = str((datetime.datetime.now()).strftime('%Y.%m.%d.%H.%M'))
+frome_DateTime = str((datetime.datetime.now() - datetime.timedelta(hours=2)).strftime('%Y.%m.%d.%H.%M'))
+
 for key_word in word_counter:
-    response = requests.get("https://search.naver.com/search.naver?where=news&query="+key_word.strip()+"&sm=tab_opt&sort=1&photo=0&field=0&pd=7&ds=2022.11.21.10.11&de=2022.11.22.11.11&docid=&related=0&mynews=0&office_type=0&office_section_code=0&news_office_checked=&nso=so%3Add%2Cp%3Aall&is_sug_officeid=0",headers=headers, timeout=10)
+    response = requests.get("https://search.naver.com/search.naver?where=news&query="+key_word.strip()+"&sm=tab_opt&sort=1&photo=0&field=0&pd=7&ds="+frome_DateTime+"&de="+to_DateTime+"&docid=&related=0&mynews=0&office_type=0&office_section_code=0&news_office_checked=&nso=so%3Add%2Cp%3Aall&is_sug_officeid=0",headers=headers, timeout=10)
     bs = BeautifulSoup(response.content, "html.parser")
     for n in bs.select(".news_tit"):
         if n:
             detail_searching += n.text
             contents.append([key_word,n.text])
 
-processing_end_time = strftime('%Y%m%d%I%M%S%p',localtime(time()))
+processing_end_time = str((datetime.datetime.now()).strftime('%Y%m%d%H%M'))
 print("===============processing_end_time")
 print(processing_end_time)
 
@@ -85,17 +90,17 @@ print(word_counter)
 # 워드 클라우드 2차
 wc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250)
 gen = wc.generate_from_frequencies(word_counter)
-wc.to_file(base_dir+'상세 추출.png')
+wc.to_file(base_dir+"상세"+processing_end_time+"추출.png")
 
 
 
 
-df = pd.DataFrame(contents, columns=['신문사','이슈거리들'])
+df = pd.DataFrame(contents, columns=['연관 검색어','상세'])
 
-this_time = strftime('%Y%m%d%I%M%S%p',localtime(time()))
+file_generation_time = str((datetime.datetime.now()).strftime('%Y%m%d%H%M'))
 
 
-file_nm = "이슈거리들"+this_time+".xlsx"
+file_nm = "이슈거리들"+file_generation_time+".xlsx"
 xlxs_dir = os.path.join(base_dir, file_nm)
 
 df.to_excel(xlxs_dir,
